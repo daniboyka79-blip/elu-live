@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Elu 🧊 LIVE Meme Boxes</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body {
+      background: radial-gradient(circle at top, #1f102e, #08080e 72%);
+      color: #fff;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 14px 12px 24px;
+      user-select: none;
+      overflow-x: hidden;
+    }
+    .header {
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      padding: 10px 14px;
+      border-radius: 18px;
+      margin-bottom: 12px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: linear-gradient(135deg, #fe2c55, #25f4ee);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 16px;
+    }
+    .brand h1 { font-size: 16px; font-weight: 800; }
+    .brand p { font-size: 11px; color: #25f4ee; }
+    .live-pill {
+      background: #fe2c55;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 800;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      width: 100%;
+      max-width: 420px;
+      background: rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 4px;
+      margin-bottom: 14px;
+      gap: 4px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 9px 6px;
+      border: none;
+      border-radius: 10px;
+      background: transparent;
+      color: #bbb;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: linear-gradient(90deg, #fe2c55, #ff5e7e);
+      color: #fff;
+    }
+
+    .panel { width: 100%; max-width: 420px; display: none; flex-direction: column; align-items: center; }
+    .panel.active { display: flex; }
+
+    /* Mystery Meme Boxes */
+    .box-hint {
+      font-size: 12px;
+      color: #ddd;
+      text-align: center;
+      margin-bottom: 12px;
+      background: rgba(255,255,255,0.05);
+      padding: 8px 12px;
+      border-radius: 12px;
+      width: 100%;
+    }
+    .box-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      width: 100%;
+      margin-bottom: 14px;
+    }
+    .m-box {
+      aspect-ratio: 1;
+      background: linear-gradient(145deg, #28193d, #130f1e);
+      border: 2px solid rgba(254,44,85,0.55);
+      border-radius: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.45);
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .m-box:active { transform: scale(0.93); }
+    .m-box.shaking { animation: boxShake 0.45s ease; border-color: #ffd166; }
+    @keyframes boxShake {
+      0%, 100% { transform: rotate(0deg) scale(1.05); }
+      20% { transform: rotate(-10deg) scale(1.08); }
+      40% { transform: rotate(10deg) scale(1.08); }
+      60% { transform: rotate(-8deg) scale(1.08); }
+      80% { transform: rotate(8deg) scale(1.08); }
+    }
+    .m-box.opened {
+      background: linear-gradient(145deg, #2b1320, #160c14);
+      border-color: #ffd166;
+    }
+    .m-icon { font-size: 30px; margin-bottom: 4px; }
+    .m-num { font-size: 16px; font-weight: 900; color: #fff; }
+    .m-mini-tag { font-size: 10px; font-weight: 800; color: #ffd166; margin-top: 3px; line-height: 1.2; }
+
+    .reset-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(37,244,238,0.4);
+      background: rgba(37,244,238,0.12);
+      color: #25f4ee;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    /* Fullscreen Meme Pop-out Modal */
+    .meme-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.86);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 50;
+    }
+    .meme-card {
+      width: 100%;
+      max-width: 360px;
+      background: #141420;
+      border: 3px solid #ffd166;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(254, 44, 85, 0.55);
+      animation: memePop 0.38s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      text-align: center;
+    }
+    @keyframes memePop {
+      0% { transform: scale(0.2) rotate(-8deg); opacity: 0; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    .meme-top-banner {
+      background: #000;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 900;
+      padding: 10px 12px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      border-bottom: 2px solid #222;
+    }
+    .meme-art {
+      padding: 18px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .meme-caption {
+      background: #000;
+      color: #ffd166;
+      font-size: 14px;
+      font-weight: 800;
+      padding: 10px 14px;
+      line-height: 1.4;
+      border-top: 2px solid #222;
+    }
+    .meme-dare-box {
+      padding: 14px;
+      background: rgba(254, 44, 85, 0.14);
+    }
+    .dare-label { font-size: 11px; color: #ff8fa3; font-weight: 800; margin-bottom: 4px; }
+    .dare-text { font-size: 15px; font-weight: 900; color: #fff; margin-bottom: 12px; }
+    .close-meme-btn {
+      width: 100%;
+      padding: 11px;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(90deg, #fe2c55, #ff5e7e);
+      color: #fff;
+      font-weight: 800;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    /* Spin Wheel */
+    .wheel-wrap { position: relative; width: 270px; height: 270px; margin: 6px 0 14px; }
+    .pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); font-size: 26px; z-index: 5; }
+    canvas { width: 270px; height: 270px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.2); }
+    .spin-center {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 58px; height: 58px; border-radius: 50%; border: 3px solid #fff;
+      background: #111; color: #fff; font-weight: 900; font-size: 12px; cursor: pointer; z-index: 4;
+    }
+    .result-card {
+      width: 100%; background: rgba(255,255,255,0.08); border: 1px solid rgba(37,244,238,0.4);
+      border-radius: 16px; padding: 12px; text-align: center;
+    }
+    .result-text { font-size: 17px; font-weight: 900; color: #ffd166; margin-top: 4px; }
+
+    /* Soundboard */
+    .sound-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; }
+    .snd-btn {
+      padding: 18px 10px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.07); color: #fff; font-size: 14px; font-weight: 800; cursor: pointer;
+    }
+    .snd-btn:active { background: #fe2c55; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="brand">
+      <div class="avatar">E</div>
+      <div>
+        <h1>Elu 🧊 Meme Board</h1>
+        <p>ሳጥን ምረጡና Meme እዩ!</p>
+      </div>
+    </div>
+    <div class="live-pill">LIVE ON</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('boxes', this)">🎁 Meme ሳጥን</button>
+    <button class="tab-btn" onclick="switchTab('wheel', this)">🎡 መንኮራኩር</button>
+    <button class="tab-btn" onclick="switchTab('sounds', this)">🔊 ድምጾች</button>
+  </div>
+
+  <!-- TAB 1: MEME MYSTERY BOXES -->
+  <div class="panel active" id="panel-boxes">
+    <div class="box-hint">ተመልካቾች ኮሜንት ላይ <b>ከ 1 እስከ 6</b> ያለ ቁጥር ሲመርጡ ሳጥኑን ንኪው—አስቂኝ Meme ይወጣል! 😂</div>
+    <div class="box-grid" id="boxGrid"></div>
+    <button class="reset-btn" onclick="initBoxes()">🔄 ሳጥኖቹን በአዲስ Meme ሙላ</button>
+  </div>
+
+  <!-- TAB 2: SPIN WHEEL -->
+  <div class="panel" id="panel-wheel">
+    <div class="wheel-wrap">
+      <div class="pointer">🔻</div>
+      <canvas id="wheelCanvas" width="270" height="270"></canvas>
+      <button class="spin-center" onclick="spinWheel()">SPIN</button>
+    </div>
+    <div class="result-card">
+      <div style="font-size:11px; color:#aaa;">የወጣው ትዕዛዝ</div>
+      <div class="result-text" id="wheelResult">መንኮራኩሩን አሽከርክሪ! 🎯</div>
+    </div>
+  </div>
+
+  <!-- TAB 3: SOUNDBOARD -->
+  <div class="panel" id="panel-sounds">
+    <div class="sound-grid">
+      <button class="snd-btn" onclick="playFx('boom')">💥 Vine Boom (ድንጋጤ)</button>
+      <button class="snd-btn" onclick="playFx('horn')">📯 Air Horn (ስጦታ!)</button>
+      <button class="snd-btn" onclick="playFx('win')">🏆 የአሸናፊ ድምጽ</button>
+      <button class="snd-btn" onclick="playFx('sad')">🎺 ዋህ-ዋህ (ተሸወድክ!)</button>
+    </div>
+  </div>
+
+  <!-- MEME POPUP MODAL -->
+  <div class="meme-overlay" id="memeModal" onclick="closeMeme()">
+    <div class="meme-card" onclick="event.stopPropagation()">
+      <div class="meme-top-banner" id="memeTop">ምን አልክ?! 👀</div>
+      <div class="meme-art" id="memeArt"></div>
+      <div class="meme-caption" id="memeCaption">ተመልካቹ ዝም ብሎ እያየ ስጦታ ሳይልክ ሲቀር...</div>
+      <div class="meme-dare-box">
+        <div class="dare-label">🎯 የሳጥኑ ትዕዛዝ</div>
+        <div class="dare-text" id="memeDare">3 ጊዜ Tap-Tap አድርግ!</div>
+        <button class="close-meme-btn" onclick="closeMeme()">ቀጥል 👍 (ዝጋ)</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function tone(freq, type, dur, delay = 0, slideTo = null) {
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime + delay);
+      if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, audioCtx.currentTime + delay + dur);
+      gain.gain.setValueAtTime(0.16, audioCtx.currentTime + delay);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + delay + dur);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(audioCtx.currentTime + delay);
+      osc.stop(audioCtx.currentTime + delay + dur);
+    }
+
+    function playFx(kind) {
+      if (kind === "boom") {
+        tone(110, "sine", 0.55, 0, 32);
+      } else if (kind === "horn") {
+        tone(440, "sawtooth", 0.14, 0);
+        tone(440, "sawtooth", 0.14, 0.17);
+        tone(554, "sawtooth", 0.42, 0.34);
+      } else if (kind === "win") {
+        [523, 659, 784, 1046].forEach((f, i) => tone(f, "triangle", 0.24, i * 0.09));
+      } else if (kind === "sad") {
+        tone(311, "sawtooth", 0.28, 0, 293);
+        tone(277, "sawtooth", 0.28, 0.3, 261);
+        tone(246, "sawtooth", 0.55, 0.6, 210);
+      }
+    }
+
+    // Illustrated Meme Database
+    const MEMES = [
+      {
+        tag: "👀 ጥርጣሬ",
+        top: "ምን አልክ?! 👀",
+        bg: "linear-gradient(135deg, #2b2d42, #1a1b26)",
+        svg: `<svg width="120" height="120" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="52" fill="#ffd166" stroke="#fff" stroke-width="4"/>
+          <circle cx="42" cy="50" r="14" fill="#fff"/><circle cx="78" cy="50" r="14" fill="#fff"/>
+          <circle cx="48" cy="50" r="6" fill="#000"/><circle cx="84" cy="50" r="6" fill="#000"/>
+          <path d="M28 34 Q42 28 54 36" stroke="#000" stroke-width="4" fill="none"/>
+          <path d="M66 36 Q78 28 92 34" stroke="#000" stroke-width="4" fill="none"/>
+          <path d="M44 84 L76 80" stroke="#000" stroke-width="5" stroke-linecap="round"/>
+        </svg>`,
+        caption: "ተመልካቹ ዝም ብሎ እያየ ስጦታ ሳይልክ ሲቀር...",
+        dare: "ሳጥኑን የመረጠው ሰው 10 ጊዜ Tap-Tap ያድርግ!",
+        sound: "boom"
+      },
+      {
+        tag: "😱 ጉድ ፈላ!",
+        top: "ጉድ ፈላ! 😱",
+        bg: "linear-gradient(135deg, #7209b7, #3a0ca3)",
+        svg: `<svg width="120" height="120" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="52" fill="#ff9f1c" stroke="#fff" stroke-width="4"/>
+          <circle cx="42" cy="46" r="12" fill="#fff"/><circle cx="78" cy="46" r="12" fill="#fff"/>
+          <circle cx="42" cy="46" r="5" fill="#000"/><circle cx="78" cy="46" r="5" fill="#000"/>
+          <ellipse cx="60" cy="82" rx="14" ry="20" fill="#111" stroke="#fff" stroke-width="3"/>
+          <path d="M22 65 Q18 85 28 95" stroke="#ffd166" stroke-width="8" stroke-linecap="round" fill="none"/>
+          <path d="M98 65 Q102 85 92 95" stroke="#ffd166" stroke-width="8" stroke-linecap="round" fill="none"/>
+        </svg>`,
+        caption: "PK ሊያልቅ 3 ሰከንድ ሲቀረው አንበሳ ሲገባ!",
+        dare: "💃 Elu 10 ሰከንድ እስክስታ ትውረድ!",
+        sound: "horn"
+      },
+      {
+        tag: "😎 የቤቱ ንጉሥ",
+        top: "VIP BOSS 😎",
+        bg: "linear-gradient(135deg, #0077b6, #03045e)",
+        svg: `<svg width="120" height="120" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="52" fill="#06d6a0" stroke="#fff" stroke-width="4"/>
+          <rect x="24" y="42" width="32" height="18" rx="4" fill="#000"/>
+          <rect x="64" y="42" width="32" height="18" rx="4" fill="#000"/>
+          <line x1="56" y1="48" x2="64" y2="48" stroke="#000" stroke-width="4"/>
+          <line x1="30" y1="46" x2="40" y2="54" stroke="#fff" stroke-width="2"/>
+          <line x1="70" y1="46" x2="80" y2="54" stroke="#fff" stroke-width="2"/>
+          <path d="M40 78 Q60 94 80 78" stroke="#000" stroke-width="5" fill="none" stroke-linecap="round"/>
+        </svg>`,
+        caption: "ትክክለኛውን ሳጥን በአንዴ ስታገኝ!",
+        dare: "👑 የመረጠውን ሰው ስም ጠርተሽ Follow አድርጊው!",
+        sound: "win"
+      },
+      {
+        tag: "🤡 ተሸወድክ!",
+        top: "ተሸወድክ! 🤡",
+        bg: "linear-gradient(135deg, #6a040f, #370617)",
+        svg: `<svg width="120" height="120" viewBox="0 0 120 120">
+          <circle cx="24" cy="36" r="16" fill="#ff0055"/><circle cx="96" cy="36" r="16" fill="#ff0055"/>
+          <circle cx="60" cy="62" r="48" fill="#fff" stroke="#ffd166" stroke-width="4"/>
+          <circle cx="44" cy="52" r="6" fill="#000"/><circle cx="76" cy="52" r="6" fill="#000"/>
+          <circle cx="60" cy="66" r="11" fill="#fe2c55"/>
+          <path d="M38 82 Q60 100 82 82" stroke="#fe2c55" stroke-width="6" fill="none" stroke-linecap="round"/>
+        </svg>`,
+        caption: "ትልቅ ሽልማት ይወጣል ብለህ ሳጥኑን ስትከፍት...",
+        dare: "😂 ባዶ ሳጥን ነው! ሌላ ቁጥር እንደገና ምረጥ!",
+        sound: "sad"
+      },
+      {
+        tag: "🔥 እሳት ሆነ!",
+        top: "THIS IS FINE 🔥",
+        bg: "linear-gradient(135deg, #d00000, #9d0208)",
+        svg: `<svg width="120" height="120" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="52" fill="#ffd166" stroke="#fff" stroke-width="4"/>
+          <circle cx="43" cy="50" r="6" fill="#000"/><circle cx="77" cy="50" r="6" fill="#000"/>
+          <path d="M44 74 Q60 84 76 74" stroke="#000" stroke-width="4" fill="none"/>
+          <text x="14" y="106" font-size="28">🔥🔥🔥</text>
+        </svg>`,
+        caption: "ተቃራኒው ቡድን በ 20,000 ነጥብ ሲመራና ፈገግ ስትይ!",
+        dare: "💧 1 ብርጭቆ ውሃ ጠጪና ተረጋጊ!",
+        sound: "boom"
+      },
+      {
+        tag: "😍 ልቤ ቀለጠ",
+        top: "CHAOS & LOVE 😍",
+        bg: "linear-gradient(135deg, #f72585, #b5179e)",
+        svg: `<svg width="120" height="120" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="52" fill="#ffd166" stroke="#fff" stroke-width="4"/>
+          <text x="24" y="58" font-size="26">❤️❤️</text>
+          <path d="M40 76 Q60 96 80 76" stroke="#fe2c55" stroke-width="6" fill="none" stroke-linecap="round"/>
+        </svg>`,
+        caption: "Elu 🧊 ፈገግ ስትል መላው ቻት ሲቀልጥ!",
+        dare: "😘 ለቻቱ አንድ ትልቅ Kiss እና ሰላምታ ላኪ!",
+        sound: "win"
+      }
+    ];
+
+    function initBoxes() {
+      const grid = document.getElementById("boxGrid");
+      grid.innerHTML = "";
+      const shuffled = [...MEMES].sort(() => Math.random() - 0.5);
+      shuffled.forEach((meme, i) => {
+        const div = document.createElement("div");
+        div.className = "m-box";
+        div.innerHTML = `<div class="m-icon">🎁</div><div class="m-num">ቁጥር ${i + 1}</div>`;
+        div.onclick = () => {
+          if (div.classList.contains("opened")) {
+            openMemeModal(meme);
+            return;
+          }
+          div.classList.add("shaking");
+          setTimeout(() => {
+            div.classList.remove("shaking");
+            div.classList.add("opened");
+            div.innerHTML = `<div class="m-icon">😂</div><div class="m-mini-tag">${meme.top}</div>`;
+            openMemeModal(meme);
+          }, 420);
+        };
+        grid.appendChild(div);
+      });
+    }
+
+    function openMemeModal(meme) {
+      document.getElementById("memeTop").textContent = meme.top;
+      const art = document.getElementById("memeArt");
+      art.style.background = meme.bg;
+      art.innerHTML = meme.svg;
+      document.getElementById("memeCaption").textContent = meme.caption;
+      document.getElementById("memeDare").textContent = meme.dare;
+      document.getElementById("memeModal").style.display = "flex";
+      playFx(meme.sound);
+    }
+
+    function closeMeme() {
+      document.getElementById("memeModal").style.display = "none";
+    }
+
+    function switchTab(name, btn) {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("panel-" + name).classList.add("active");
+    }
+
+    // Spin Wheel
+    const wheelItems = ["💃 እስክስታ", "🎤 ዘፈን", "👑 Top 1 ስም", "🔥 PK ግቢ", "💧 ውሃ ጠጪ", "😘 Kiss ላኪ"];
+    const wColors = ["#fe2c55", "#1f2833", "#0096c7", "#3a0ca3", "#e63946", "#1d3557"];
+    let angle = 0, spinning = false;
+
+    function drawWheel() {
+      const ctx = document.getElementById("wheelCanvas").getContext("2d");
+      const arc = (2 * Math.PI) / wheelItems.length;
+      ctx.clearRect(0, 0, 270, 270);
+      wheelItems.forEach((label, i) => {
+        const start = angle + i * arc;
+        ctx.beginPath();
+        ctx.moveTo(135, 135);
+        ctx.arc(135, 135, 131, start, start + arc);
+        ctx.fillStyle = wColors[i % wColors.length];
+        ctx.fill();
+        ctx.save();
+        ctx.translate(135, 135);
+        ctx.rotate(start + arc / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#fff";
+        ctx.font = "bold 12px sans-serif";
+        ctx.fillText(label, 118, 4);
+        ctx.restore();
+      });
+    }
+
+    function spinWheel() {
+      if (spinning) return;
+      spinning = true;
+      const totalRot = Math.PI * 2 * (5 + Math.random() * 4);
+      const startAngle = angle, startTime = performance.now();
+      function anim(now) {
+        const t = Math.min(1, (now - startTime) / 3000);
+        angle = startAngle + totalRot * (1 - Math.pow(1 - t, 3));
+        drawWheel();
+        if (t < 1) requestAnimationFrame(anim);
+        else {
+          spinning = false;
+          const arc = (2 * Math.PI) / wheelItems.length;
+          const rel = (1.5 * Math.PI - (angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+          document.getElementById("wheelResult").textContent = wheelItems[Math.floor(rel / arc)];
+          playFx("win");
+        }
+      }
+      requestAnimationFrame(anim);
+    }
+
+    initBoxes();
+    drawWheel();
+  </script>
+</body>
+</html>
